@@ -47,8 +47,8 @@
     <a href="stop.html">Stop</a>
   </nav>
   <main>
-    <h2>Welcome to the Bus Tracker</h2>
-    <p>This is your starter site, inspired by bustimes.org.</p>
+    <h2>Live Bus Map – trentbarton</h2>
+    <p>Showing live bus positions using BODS data.</p>
     <div id="map"></div>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -59,15 +59,29 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Dummy bus marker
-    const busIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/61/61212.png',
-      iconSize: [32, 32],
-    });
+    async function getLiveBusData() {
+      const url = 'https://api.realtime.bus-data.dft.gov.uk/SIRI-VM/?operatorRef=Notts%20%26%20Derby%20Traction';
+      const res = await fetch(url, {
+        headers: {
+          'x-api-key': '8806c5993f182bf0c02943fe00898b0f29b088fa'
+        }
+      });
+      const xml = await res.text();
+      const doc = new DOMParser().parseFromString(xml, 'text/xml');
+      doc.querySelectorAll('VehicleActivity').forEach(v => {
+        const lat = parseFloat(v.querySelector('Latitude')?.textContent);
+        const lon = parseFloat(v.querySelector('Longitude')?.textContent);
+        const id = v.querySelector('VehicleRef')?.textContent;
+        const line = v.querySelector('PublishedLineName')?.textContent;
+        if (lat && lon) {
+          L.marker([lat, lon]).addTo(map)
+            .bindPopup(`${line} – ${id}`);
+        }
+      });
+    }
 
-    L.marker([52.938, -1.253], { icon: busIcon }).addTo(map)
-      .bindPopup('Bus 217 - i4')
-      .openPopup();
+    getLiveBusData();
+    setInterval(getLiveBusData, 30000); // refresh every 30 seconds
   </script>
 </body>
 </html>
