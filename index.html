@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bus Tracker – Home</title>
+  <title>Bus Tracker – Route i4</title>
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
   <style>
     body {
@@ -38,7 +38,7 @@
 </head>
 <body>
   <header>
-    <h1>Bus Tracker</h1>
+    <h1>Bus Tracker – Route i4</h1>
   </header>
   <nav>
     <a href="index.html">Home</a>
@@ -47,41 +47,41 @@
     <a href="stop.html">Stop</a>
   </nav>
   <main>
-    <h2>Live Bus Map – trentbarton</h2>
-    <p>Showing live bus positions using BODS data.</p>
+    <h2>Live Map of i4 Service</h2>
+    <p>Tracking real buses in real time using the BODS feed.</p>
     <div id="map"></div>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([52.938, -1.253], 13); // Nottingham area
+    const map = L.map('map').setView([52.938, -1.253], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
     async function getLiveBusData() {
-      const url = 'https://api.realtime.bus-data.dft.gov.uk/SIRI-VM/?operatorRef=Notts%20%26%20Derby%20Traction';
-      const res = await fetch(url, {
-        headers: {
-          'x-api-key': '8806c5993f182bf0c02943fe00898b0f29b088fa'
-        }
-      });
+      const url = 'https://data.bus-data.dft.gov.uk/api/v1/datafeed/16085/?api_key=8806c5993f182bf0c02943fe00898b0f29b088fa';
+      const res = await fetch(url);
       const xml = await res.text();
       const doc = new DOMParser().parseFromString(xml, 'text/xml');
+
       doc.querySelectorAll('VehicleActivity').forEach(v => {
-        const lat = parseFloat(v.querySelector('Latitude')?.textContent);
-        const lon = parseFloat(v.querySelector('Longitude')?.textContent);
-        const id = v.querySelector('VehicleRef')?.textContent;
         const line = v.querySelector('PublishedLineName')?.textContent;
-        if (lat && lon) {
-          L.marker([lat, lon]).addTo(map)
-            .bindPopup(`${line} – ${id}`);
+        if (line && line.toLowerCase() === 'i4') {
+          const lat = parseFloat(v.querySelector('Latitude')?.textContent);
+          const lon = parseFloat(v.querySelector('Longitude')?.textContent);
+          const id = v.querySelector('VehicleRef')?.textContent;
+
+          if (lat && lon) {
+            L.marker([lat, lon]).addTo(map)
+              .bindPopup(`i4 – Vehicle ${id}`);
+          }
         }
       });
     }
 
     getLiveBusData();
-    setInterval(getLiveBusData, 30000); // refresh every 30 seconds
+    setInterval(getLiveBusData, 30000);
   </script>
 </body>
 </html>
